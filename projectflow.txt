@@ -1,20 +1,42 @@
 1. Create git repo and clone it in local. # $ 'first commit'
-2. Create main.py and add code to it. (it will save a csv file to a new "data" folder)
+2. Create main.py and add code to it. 
+   (it will save a csv file to a new "data" folder)
 3. Do a git add-commit-push before initializing dvc.
-  # $ 'first commit before dvc'
-# pip install dvc
+   # $ 'first commit before dvc'
+   # pip install dvc
 4. Now we do "dvc init" (creates .dvcignore, .dvc)
-5. Now do "mkdir S3" (creates a new S3 directory) # this is destination
-   # in place os s3 we will put s3 link later
-6. Now we do "dvc remote add -d myremote S3"
+5. Now do "mkdir S3" (creates a new S3 directory) 
+   # this is destination
+   # in place of s3 we will put s3 link later
+6. Now we do "dvc remote add -d myremote S3" is local folder 
+   /*
+     1. dvc remote add
+     2. This tells DVC: "I want to add a new remote 
+     3. storage location where DVC will push/pull datasets or model files."
+     4. Remote can be S3, Google Drive, Azure, SSH server, local folder, etc.
+     5. -d means make this remote the default.
+     6. myremote This is the name you’re giving to this remote storage.
+     7. S3, This is the URL/path to the storage.
+        If it’s AWS S3, it would usually look like:
+        dvc remote add -d myremote s3://mybucketname/path
+   */
+   we can write anything in place of 'myremote', s3 
 7. Next "dvc add data/"  # dvc is responsible for tracking anythin in data/
    Now it will ask to do: ("git rm -r --cached 'data'" and "git commit -m "stop tracking data"")
-   Because initially we were tracking data/ folder from git so now we remove it for DVC to handle.
+   Because initially we were tracking data/ folder from git so now we remove it 
+   for DVC to handle.
    # $ 'stop tracking data'
-8. Again we do "dvc add data/" (creates data.dvc) then "git add .gitignore data.dvc"
+8. Again we do "dvc add data/" (creates data.dvc) then
+    "git add .gitignore data.dvc"
    # data.dvc contains 'id' which will be used to fetch 'data' 
+    id here is md5
    # use ' dvc status' now, u see data nd pipelines r up to date
-   # $ 'dvc initiated with data version 1'
+   as no changes in sample_data.csv
+   # use git log --online to see all commits 
+   # $ 'dvc initiated with data version 1' (pushed to github)
+   # this shudnt be done as below we push 1st version of data
+   # to s3
+
 9. Now - "dvc commit" and then "dvc push"
    # before this step, dvc was tracking 'data' but not added in s3,
    # after this step it adds in s3 folder
@@ -24,12 +46,40 @@
 
 10. Now make changes to main.py to append a new row in data, 
     check changes via "dvc status"
-    
-
+    now sample_data.csv has changed 
 11. Again - - "dvc commit" and then "dvc push"
+     # when u do dvc commit, md5 in data.dvc will change 
+     # next when u do dvc push, it will push to remote i.e s3 folder
+     # wht it will push? it will push 2 files , each in 1 folder , 
+     # files r id file and data file, in our case its 'csv' file
+     # s3 fodler is usually in aws, which is not tracked by git 
+
+     now git see data.dvc has changed, main.py has changed 
      # to add to ur s3 bucket all files of 'data' folder , 
      # here s3 bucket is s3 folder
 12. Then git add-commit-push (we're saving V2 of our data at this point)
      # $ '2nd version of data saved'
+
 13. Check dvc/git status, everything should be upto date.
 14. Now repeat step 10-12 for v3 of data.
+
+
+now how to roll back 
+1. git checkout <hash>, hash we get frm  
+   git log --online 
+2. doing this our , in main.py now  
+   the 2gfs r commented nd 
+   in data.dvc md5 changes  which is for data havin no gfs  , 
+   but if we do dvc status , we see our sample.csv file 
+   still has 2gfs hence 'dvc status' shows data/ folder in red
+    
+   so to get back our correct data havin no gfs , do 
+   dvc pull 
+
+   so basiclaly when u did git checkout hash, u were able to 
+   get the files of the mentioned version but to get correct
+   data version u used the correcct new md5 in data.dvc to 
+   fetch correct data, using dvc pull. 
+
+3. now if u do dvc status, everything is up to date 
+4. do checkout main , to go back to havin 2 gfs  
